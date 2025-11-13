@@ -13,32 +13,58 @@ jack_port_t *input_port_right;
 jack_port_t *output_port_right;
 jack_client_t *client;
 
+float leftmax = -1.0f;
+float leftmin = 1.0f;
+float rightmax = -1.0f;
+float rightmin = 1.0f;
+
+
 // OPTIONAL CODE TO ADD HERE:
 // scan keyboard to control reset of min/max recorded
 
 int process (jack_nframes_t nframes, void *arg) {
   jack_default_audio_sample_t *in, *out;
-  
+
+  int flagl = 0;
+  int flagr = 0;
+
   in = jack_port_get_buffer (input_port_left, nframes);
   out = jack_port_get_buffer (output_port_left, nframes);
 
-  // CODE TO ADD HERE
-  // loop over the left input buffer and keep track of the minimum and maximum
+  for (int i=0; i < nframes; i++) {
+	if (leftmax < in[i]) {
+		leftmax = in[i];
+		flagl = 1;
+		}
+	if(leftmin > in[i]) {
+		leftmin = in[i];
+		flagl = 1;
+		}
+	}
 
   memcpy (out, in,
           sizeof (jack_default_audio_sample_t) * nframes);
-  
+
   in = jack_port_get_buffer (input_port_right, nframes);
   out = jack_port_get_buffer (output_port_right, nframes);
 
-  // CODE TO ADD HERE
-  // loop over the right input buffer and keep track of the minimum and maximum
-  
+ for (int i=0; i < nframes; i++) {
+        if (rightmax < in[i]) {
+                rightmax = in[i];
+                flagr = 1;
+                }
+        if(rightmin > in[i]) {
+                rightmin = in[i];
+                flagr = 1;
+                }
+        }
+
   memcpy (out, in,
           sizeof (jack_default_audio_sample_t) * nframes);
 
-  // CODE TO ADD HERE
-  // if any maximum of mimimum has changed, print it to the screen
+  if(flagl) printf("LEFT MIN: %f\nLEFT MAX: %f\n", leftmin, leftmax);
+  if(flagr) printf("RIGHT MIN: %f\nRIGHT MAX: %f\n", rightmin, rightmax);
+
 
   return 0;
 }

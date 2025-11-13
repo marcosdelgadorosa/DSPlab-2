@@ -5,7 +5,6 @@
 #include <string.h>
 #include <termios.h>
 #include <fcntl.h>
-
 #include <jack/jack.h>
 
 jack_port_t *input_port_left;
@@ -14,30 +13,42 @@ jack_port_t *input_port_right;
 jack_port_t *output_port_right;
 jack_client_t *client;
 
-// OPTIONAL CODE TO ADD HERE
-// scan keyboard functions which allow you to control the amplitude
+float amplitude = 1;
+int indexleft = 0;
+float max = -1.0f;
+float min = 1.0f;
+int flag = 0;
 
 int process (jack_nframes_t nframes, void *arg) {
   jack_default_audio_sample_t *outleft, *outright;
 
   int i;
   outleft = jack_port_get_buffer (output_port_left, nframes);
+
+  float phase;
   for (i=0; i<nframes; i++) {
-
-    // CODE TO ADD HERE
-    // integrate a waveform generation (eg triangle wave)
-    // with controllable amplitude
-
-    outleft[i] = 0;
-    
+  	phase = (indexleft)/47.0f;
+	outleft[i] = phase*amplitude*2-amplitude;
+ 	indexleft = (indexleft+1)%48;
+	if (outleft[i] < min){
+		min = outleft[i];
+	 	flag = 1;
+		}
+	if (outleft[i] > max){
+		max = outleft[i];
+		flag = 1;
+	}
   }
-  
-  outright = jack_port_get_buffer (output_port_right, nframes);
-  for (i=0; i<nframes; i++) {
-    outright[i] = outleft[i];
+
+  if(amplitude < 15) amplitude = amplitude + 0.1;
+
+  if (flag == 1) {
+	printf("Amplitude: %f\nMin: %f\nMax: %f\n", amplitude, min, max);
   }
 
+flag =0;
   return 0;
+
 }
 
 void jack_shutdown (void *arg) {
